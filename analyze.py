@@ -2,6 +2,7 @@ import os
 import argparse
 import time
 import numpy as np
+from tqdm import tqdm
 
 import config as cfg
 from metadata import grid
@@ -166,20 +167,22 @@ def analyzeFile(soundscape, test_function):
 
     # Get specs for file
     spec_batch = []
-    for spec in audio.specsFromFile(soundscape,
-                                    rate=cfg.SAMPLE_RATE,
-                                    seconds=cfg.SPEC_LENGTH,
-                                    overlap=cfg.SPEC_OVERLAP,
-                                    minlen=cfg.SPEC_MINLEN,
-                                    fmin=cfg.SPEC_FMIN,
-                                    fmax=cfg.SPEC_FMAX,
-                                    win_len=cfg.WIN_LEN,
-                                    spec_type=cfg.SPEC_TYPE,
-                                    magnitude_scale=cfg.MAGNITUDE_SCALE,
-                                    bandpass=True,
-                                    shape=(cfg.IM_SIZE[1], cfg.IM_SIZE[0]),
-                                    offset=0,
-                                    duration=None):
+    for spec in tqdm(list(audio.specsFromFile(soundscape,
+                                              rate=cfg.SAMPLE_RATE,
+                                              seconds=cfg.SPEC_LENGTH,
+                                              overlap=cfg.SPEC_OVERLAP,
+                                              minlen=cfg.SPEC_MINLEN,
+                                              fmin=cfg.SPEC_FMIN,
+                                              fmax=cfg.SPEC_FMAX,
+                                              win_len=cfg.WIN_LEN,
+                                              spec_type=cfg.SPEC_TYPE,
+                                              magnitude_scale=cfg.MAGNITUDE_SCALE,
+                                              bandpass=True,
+                                              shape=(cfg.IM_SIZE[1], cfg.IM_SIZE[0]),
+                                              offset=0,
+                                              duration=None))):
+
+
 
         # Prepare as input
         spec = model.prepareInput(spec)
