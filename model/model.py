@@ -276,10 +276,18 @@ def predictionPooling(p, sensitivity=-1, mode='avg'):
 
     return p_pool
 
-def predict(spec_batch, test_function):
+def predict(spec_batch, test_function, outfile):
+
+    embedding_functions, test_function = test_function
+
+    # Penultimate layer embedding
+    embeddings = [f(spec_batch) for f in embedding_functions]
 
     # Prediction
     prediction = test_function(spec_batch)
+
+    np.savez(outfile + "-embedding.npz", embedding=embeddings[0])
+    np.savez(outfile + "-prediction.npz", prediction=prediction)
 
     # Prediction pooling
     p_pool = predictionPooling(prediction, cfg.SENSITIVITY)

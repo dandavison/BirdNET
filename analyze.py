@@ -44,9 +44,10 @@ def loadModel():
     net = model.loadParams(net, snapshot['params'])
 
     # Compile test function
+    embedding_functions = [model.test_function(net, layer_index=i) for i in [-4]]
     test_function = model.test_function(net, layer_index=-2)
 
-    return test_function
+    return embedding_functions, test_function
 
 ######################### EBIRD #########################
 def loadGridData():
@@ -152,7 +153,7 @@ def getAudacityLabels(p, path):
     return stext   
 
 ###################### ANALYSIS #########################
-def analyzeFile(soundscape, test_function):
+def analyzeFile(soundscape, test_function, soundscape_file):
 
     ncnt = 0
 
@@ -167,6 +168,7 @@ def analyzeFile(soundscape, test_function):
 
     # Get specs for file
     spec_batch = []
+    spec_num = 1
     for spec in tqdm(list(audio.specsFromFile(soundscape,
                                               rate=cfg.SAMPLE_RATE,
                                               seconds=cfg.SPEC_LENGTH,
@@ -197,7 +199,7 @@ def analyzeFile(soundscape, test_function):
         if len(spec_batch) >= cfg.SPECS_PER_PREDICTION:
 
             # Make prediction
-            p, _ = model.predict(spec_batch, test_function)
+            p, _ = model.predict(spec_batch, test_function, soundscape_file + ("-%d" % spec_num))
 
             # Calculate next timestamp
             pred_end = pred_start + cfg.SPEC_LENGTH + ((len(spec_batch) - 1) * (cfg.SPEC_LENGTH - cfg.SPEC_OVERLAP))
@@ -208,18 +210,30 @@ def analyzeFile(soundscape, test_function):
             # Advance to next timestamp
             pred_start = pred_end - cfg.SPEC_OVERLAP
             spec_batch = []
+
+        spec_num += 1
+
             
     return analysis
 
 ######################## MAIN ###########################
 def process(soundscape, sid, out_dir, out_type, test_function):
 
+    outfile = os.path.join(
+        out_dir,
+        os.path.splitext(soundscape.split(os.sep)[-1])[0]
+        + (".BirdNET.selections.txt" if out_type == "raven" else ".BirdNET.Audacity_Labels.txt"),
+    )
+
+    if os.path.exists(outfile):
+        return
+
     # Time
     start = time.time()
     log.p(('SID:', sid, 'PROCESSING:', soundscape.split(os.sep)[-1]), new_line=False)
 
     # Analyze file
-    p = analyzeFile(soundscape, test_function)
+    p = analyzeFile(soundscape, test_function, os.path.join(out_dir, os.path.splitext(soundscape.split(os.sep)[-1])[0]))
 
     # Generate Raven selection table + Audacity text lables
     stable, dcnt = getRavenSelectionTable(p, soundscape.split(os.sep)[-1])
@@ -231,11 +245,11 @@ def process(soundscape, sid, out_dir, out_type, test_function):
         os.makedirs(out_dir)
     
     if out_type == 'raven':
-        with open(os.path.join(out_dir, os.path.splitext(soundscape.split(os.sep)[-1])[0] + '.BirdNET.selections.txt'), 'w') as stfile:
+        with open(outfile, 'w') as stfile:
             stfile.write(stable)
 
     else:
-        with open(os.path.join(out_dir, os.path.splitext(soundscape.split(os.sep)[-1])[0] + '.BirdNET.Audacity_Labels.txt'), 'w') as stfile:
+        with open(outfile) as stfile:
             stfile.write(atext)        
 
     # Time
