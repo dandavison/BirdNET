@@ -5,7 +5,7 @@ FROM python:3.7-slim
 RUN apt-get update && apt-get install -y --no-install-recommends git ffmpeg build-essential gfortran libblas-dev liblapack-dev && rm -rf /var/lib/apt/lists/*
 
 # Install required Python packages
-RUN pip install numpy scipy librosa future tqdm
+RUN pip install numpy scipy librosa future tqdm dask
 
 # Install Theano and Lasagne
 RUN pip install -r https://raw.githubusercontent.com/Lasagne/Lasagne/master/requirements.txt
@@ -15,6 +15,3 @@ COPY model/BirdNET_Soundscape_Model.pkl model/BirdNET_Soundscape_Model.pkl
 
 # Import all scripts
 COPY . ./
-
-# Add entry point to run the script
-ENTRYPOINT [ "python3", "./analyze.py" ]
