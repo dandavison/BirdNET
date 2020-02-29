@@ -1,5 +1,4 @@
-# Build from Python 3.7 slim
-FROM python:3.7-slim
+FROM daskdev/dask
 
 # Install required packages while keeping the image small
 RUN apt-get update && apt-get install -y --no-install-recommends git ffmpeg build-essential gfortran libblas-dev liblapack-dev && rm -rf /var/lib/apt/lists/*
